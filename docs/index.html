@@ -1,0 +1,71 @@
+<html>
+<head>
+<title>API Docs</title>
+</head>
+<body>
+<H1>API Docs</H1>
+
+<H2>Overview</H2>
+<!-- image -->
+This API provides multiple secure connections between a smartphone
+browser and an IoT device.
+<h3>Properties:</h3>
+<ul>
+<li>End-to-end encrypted</li>
+<li>Low running cost</li>
+<li>Network agnostic</li>
+<li>Simple,user friendly pairing</li>
+<li>Multiple independent channels</li>
+</ul>
+<h3>Goal</h3>
+Our goal is to
+provide a easy web-developer friendly way to access data and services 
+on an IoT device, without compromising the user's security
+
+<h3>Differences from VPN</h3>
+Conceptually it can be thought of as a point-to-point VPN, however 
+the connections terminate <em>inside</em> the user's browser so 
+are only available to that page - not to other apps on the same device.
+
+<h3>Web API<h3>
+Each service offered by the IoT device is exposed with a websocket-like interface that will be familiar to web-developers. Each service is accessed by name e.g.:
+<pre>
+        var camChannel = pipe.createDataChannel("camera", {});
+</pre>
+Once opened a channel can be used:
+<pre>
+        camChannel.onopen = function() {
+            camChannel.send(JSON.stringify({command: "read"}));
+        };
+</pre>
+The semantics of each channel depend on it's purpose. See "Supported Services" for more details
+
+<h3>Device Agent<h3>
+The Device Agent runs on the IoT device. It consists of a multi-threaded networking process with some optional scripts to customize the services. 
+<br/>
+In our prototype devices it is run in the user's .xsession to ensure it is always present and has access to the screen. 
+
+<h3>Pairing<h3>
+When the device is freshly unboxed (or in the factory reset state), it has no local or remote keys. 
+<br/>
+On startup the Device agent will create a local (selfsigned) Public/Private keypair and put it into a keystore (currently <pre>ipsecert.ks</pre>) in the current directory.
+<br/>
+It then presents a token (derived from it's public key) for pairing.
+Currently this is done visually as a QRcode - but it can also be done over a short range radio such as Bluetooth LE.
+<br/> 
+The new owner (aka <i>Master</i>) uses the <pre>claim.html</pre> page to scan the QRCode and thereby validating their proximity to (hence implied ownership of)  the new device.
+<br/>
+The |pipe| system facilitates a secure key-exchange between the device and the user's browser. Each side then stores the other's public key and it's fingerprint for future use.
+<br/>
+Any subsequent incomming connection requests to the device are ignored unless they use the Master's public key. Connections that pass this test can then access the device's services .
+
+<h3>Network topologies</h3>
+The |pipe| system uses ICE (<a href="https://datatracker.ietf.org/doc/rfc5245/">RFC 5245</a>) to provide efficient and secure NAT traversal. Both the device and the browser (smartphone) can be behind different routers and still achive direct communication. In some cases this isn't possible and a |pipe| supplied TURN server will be used. The TURN server has no access to the content of the messages.<br/>
+These features are a standard part of the Chrome, Firefox and Edge browsers.
+<br/>
+In order to facilitate pairing and subsequent connections a |pipe| provided rendevous server is used. Devices and Browsers make websocket connections to this service to exchange setup messages.
+
+<h3>Supported Services</h3>
+</body>
+</html>
+
