@@ -59,6 +59,18 @@ The new owner (aka <i>Master</i>) uses the <pre>claim.html</pre> page to scan th
 The |pipe| system facilitates a secure key-exchange between the device and the user's browser. Each side then stores the other's public key and it's fingerprint for future use.
 <br/>
 Any subsequent incomming connection requests to the device are ignored unless they use the Master's public key. Connections that pass this test can then access the device's services .
+
+<h3>Web Service</h3>
+The |pipe| system leverages WebRTC functionality in the browsers, this functionality is only available to 'secure' sites, so the claim.html and other pages must be hosted on an https:// site. (or localhost: for testing)
+<br/>
+
+We do not require any dynamic content on the site, so the pages can be hosted by any webservice - including github-pages or even jsfiddle.
+<br/>
+
+When pairing,
+the Device stores the public key and identity in the keystore, but the webbrowser uses IndexDB. Access to IndexDb is restricted to pages from the 'same origin'. This means that the same site must be used to host
+both claim.html and any other pages that access the device.
+
  
 <h3>Connecting to a device</h3>
 The following steps are needed to connect to a device:
@@ -102,6 +114,8 @@ The following steps are needed to connect to a device:
 </li>
 </ol>
 
+
+
 <h3>Network topologies</h3>
 The |pipe| system uses ICE (<a href="https://datatracker.ietf.org/doc/rfc5245/">RFC 5245</a>) to provide efficient and secure NAT traversal. Both the device and the browser (smartphone) can be behind different routers and still achive direct communication. In some cases this isn't possible and a |pipe| supplied TURN server will be used. The TURN server has no access to the content of the messages.<br/>
 These features are a standard part of the Chrome, Firefox and Edge browsers.
@@ -132,6 +146,26 @@ The following services are supported in the prototype device agent (incomplete l
 <tr><td>Proxy for Node.js</td><td>tcp/127.0.0.1/9000</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
 -->
 </table>
+
+<h3>Device requirements</h3>
+We currently require at minimum :
+<ul>
+<li>Linux</li>
+<li>64Mb RAM</li>
+<li>400Mhz</li>
+<li>Java 8 - this can be either Oracle's java or OpenJDK</li>
+<li>30Mb Flash</li>
+<li>A screen 64x64 pixel</li>
+OR
+<li>Bluetooth LE (comming soon)</li>
+</ul>
+We have tested on many small linux devices, we reccomend the Raspberry Pi 3 as a good starting point.
+
+The Device agent can also be run on a Mac or Windows machine, but many of the Services are not supported.
+
+<h3>Smartphone requirements</h3>
+We currently only support Android 5.X and higher - Chrome on Mac or Windows can also be used for testing,
+provided a good webcam is available.
 
 </body>
 </html>
