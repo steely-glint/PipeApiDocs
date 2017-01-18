@@ -27,7 +27,8 @@ Conceptually it can be thought of as a point-to-point VPN, however
 the connections terminate <em>inside</em> the user's browser so 
 are only available to that page - not to other apps on the same device.
 
-<h3>Web API<h3>
+<h3>Web API</h3>
+<p><em>NOTE: This API is in Beta- the names and functionality may change. Specifically we expect to replace the Ipse name with Pipe before launch</em></p>
 Each service offered by the IoT device is exposed with a websocket-like interface that will be familiar to web-developers. Each service is accessed by name e.g.:
 <pre>
         var camChannel = pipe.createDataChannel("camera", {});
@@ -58,6 +59,48 @@ The new owner (aka <i>Master</i>) uses the <pre>claim.html</pre> page to scan th
 The |pipe| system facilitates a secure key-exchange between the device and the user's browser. Each side then stores the other's public key and it's fingerprint for future use.
 <br/>
 Any subsequent incomming connection requests to the device are ignored unless they use the Master's public key. Connections that pass this test can then access the device's services .
+ 
+<h3>Connecting to a device</h3>
+The following steps are needed to connect to a device:
+<ol>
+<li>Determine (or allocate) your own pipe-id:
+<pre>
+        Ipseorama.whoAmI(gotId, function(err) {
+            console.log("could not create identity " + err);
+        });
+</pre>
+</li>
+<li>Connect to the Rendevous service
+<pre>
+       function gotId(id){
+            pipe = new IpseDataChannel(id);
+            pipe.getWs.onopen = function() {
+              chooseDevice();
+            }
+       }
+</pre>
+</li>
+<li>retreive the known device pipe-ids
+<pre>
+      function chooseDevice(){
+            Ipseorama.dbListPrint(makeDc);
+      }      
+</pre>
+</li>
+<li>Select a device and connect to a service on it
+<pre>
+    function makeDc(friends) {
+        pipe.setNonce("");
+        pipe.setTo(friends[friends.length -1].finger);
+        camChannel = pipe.createDataChannel("camera", {});
+        camChannel.onopen = function() {
+            camChannel.send(JSON.stringify({command: "read"}));
+        };
+        camChannel.onmessage = onDcMessage;
+    }
+</pre>
+</li>
+</ol>
 
 <h3>Network topologies</h3>
 The |pipe| system uses ICE (<a href="https://datatracker.ietf.org/doc/rfc5245/">RFC 5245</a>) to provide efficient and secure NAT traversal. Both the device and the browser (smartphone) can be behind different routers and still achive direct communication. In some cases this isn't possible and a |pipe| supplied TURN server will be used. The TURN server has no access to the content of the messages.<br/>
@@ -66,6 +109,29 @@ These features are a standard part of the Chrome, Firefox and Edge browsers.
 In order to facilitate pairing and subsequent connections a |pipe| provided rendevous server is used. Devices and Browsers make websocket connections to this service to exchange setup messages.
 
 <h3>Supported Services</h3>
+The following services are supported in the prototype device agent:
+<table>
+<tr><th>feature</th><th>label</th><th>usage</th><th>Device dependencies</th><th>JSON?</th><th>description</th><th>example</th></tr>
+<tr><td>echo</td><td>echo</td><td>ch.send("hello");</td><td>none</td><td>no</td><td>Device echos all received messages</td></tr>
+<tr><td>tick</td><td>tick</td><td></td><td>none</td><td>no</td><td>sends a timestamp every second</td></tr>
+<tr><td>cert</td><td>cert</td><td>{id: "1", action: "list"}</td><td>none</td><td>yes</td><td>CRUD for certs</td><td>claim.html</td></tr>
+<tr><td>shell</td><td>shell</td><td>{command: "write",text:"ls -l"}</td><td>none</td><td>yes</td><td>runs "/bin/sh -i" on the device, sending received commands to the shell and returning stdout and stderr responses</td><td>shell.html</td></tr>
+<tr><td>test</td><td>test</td><td></td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Analog in</td><td>AIN[0-6]</td><td>{command: "start"}</td><td>BeagleBone only</td><td>no</td><td>Sends values(voltages) read from /sys/devices/ocp.*/helper.*/AIN* every 30 seconds</td><td>solar.html</td></tr>
+<tr><td>in_voltage0_raw</td><td>echo</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>DigitalOut</td><td>GPIO60</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>PWM out</td><td>pwm[1-4]</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>CPU Temperature</td><td>thermal_zone[0-4]</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Open Pixel Command</td><td>opc:127.0.0.1:7890</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Bidirectional realtime audio</td><td>rtpmic</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Realtime video</td><td>rtpcamera</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Stills camera</td><td>camera</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Write to display</td><td>screen</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Database access</td><td>redis</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Write to pipe</td><td>fakerfid</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+<tr><td>Proxy for Node.js</td><td>tcp/127.0.0.1/9000</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
+</table>
+
 </body>
 </html>
 
