@@ -49,7 +49,7 @@ In our prototype devices it is run in the user's .xsession to ensure it is alway
 <h3>Pairing</h3>
 When the device is freshly unboxed (or in the factory reset state), it has no local or remote keys. 
 <br/>
-On startup the Device agent will create a local (selfsigned) Public/Private keypair and put it into a keystore (currently <pre>ipsecert.ks</pre>) in the current directory.
+On startup the Device agent will create a local (selfsigned) Public/Private keypair and put it into a keystore <pre>ipsecert.ks</pre> in the current directory.
 <br/>
 It then presents a token (derived from it's public key) for pairing.
 Currently this is done visually as a QRcode - but it can also be done over a short range radio such as Bluetooth LE.
@@ -146,6 +146,16 @@ The following services are supported in the prototype device agent (incomplete l
 <tr><td>Proxy for Node.js</td><td>tcp/127.0.0.1/9000</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr>
 -->
 </table>
+
+<h3>Factory Reset</h3>
+Removing the file ipsecert.ks will remove all the pairing information from the device.
+When restarted it will show a QRcode again.
+
+This does not remove the corresponding entries in the user's smartphone, use:
+<pre>
+            Ipseorama.dbDelPrint(tofinger, dcb);
+</pre>
+to do that. (see delete.html)
 
 <h3>Device requirements</h3>
 We currently require at minimum :
