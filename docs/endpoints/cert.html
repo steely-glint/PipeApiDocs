@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cert Endpoint</title>
+</head>
+<body>
+<H1>Certificate management endpoint</H1>
+<H2>Summary</H2>
+<table>
+    <tr><td>Data Type</td><td>JSON</td></tr>
+    <tr><td>Data Flow</td><td>command/response</td></tr>
+    <tr><td>Class</td> <td>CertManagerEndpoint</td></tr>
+    <tr><td>Built in</td><td>YES</td></tr>
+    <tr><td>Purpose</td><td>Certificate Management</td></tr>
+    <tr><td>supported labels</td><td>cert</td></tr>
+</table>
+<H2>Data Structures</H2>
+JSON data structure
+<H3>Sent</H3>
+<pre>
+    {
+    action:acts,
+    cert:b64x509,
+    id:hash
+    }
+</pre>
+Where:
+<ul>
+    <li><code>acts</code> may be one of : 'introduce', 'shun', 'list' </li>
+    <li><code>b64x509</code> may be a base64 encoded x509 certificate containing the relevant public key</li>
+    <li><code>hash</code> is the SHA256 hash of the relevant cert</li>
+</ul>
+<H3>Responses</H3>
+<H4>action = 'introduce'</H4>
+Adds a <em>non-master</em> certificate as a friend. Certificate is added to the list of friends against the hash.
+Response:
+<pre>{status: "ok"}</pre>
+or
+<pre>{status: "failed",errorMessage:"exception message"}</pre>
+<H4>action = 'shun'</H4>
+Removes a <em>non-master</em> certificate of a friend. Any certificate stored under a hash that matches the passed id
+will be removed - unless the id is 'master'.
+Response:
+<pre>{status: "ok"}</pre>
+or
+<pre>{status: "failed",errorMessage:"exception message"}</pre>
+<H4>action = 'list'</H4>
+Lists all known certificate hashes.
+Response:
+<pre>
+    {
+    "friends:
+      ["master",
+      "C87E63E888A3FE9EB72653C7ECC6196B3F8123E4A762AB8EFE4A590E16B4EECFA"],
+    status: "ok"
+    }
+</pre>
+If the list is <i>long</i> the device may just return a count of certs
+<pre>
+{
+"friendCount: 12,
+status: "ok"
+}
+</pre>
+or
+<pre>{status: "failed",errorMessage:"exception message"}</pre>
+
+<H3>NOTE</H3>
+Connections to the certificate endpoint are restricted to "master" - i.e. the owner's device.
+This restriction can be lifted for licencees.
+</body>
+</html>
