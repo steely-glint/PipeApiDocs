@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Echo Endpoint</title>
+</head>
+<body>
+<H1>Echo test endpoint</H1>
+<H2>Summary</H2>
+<table>
+    <tr><td>Data Type</td><td>stream</td></tr>
+    <tr><td>Data Flow</td><td>bidirectional</td></tr>
+    <tr><td>Class</td> <td>EchoEndpoint</td></tr>
+    <tr><td>Built in</td><td>YES</td></tr>
+    <tr><td>Purpose</td><td>test/debug/keepalive</td></tr>
+    <tr><td>supported labels</td><td>echo</td></tr>
+</table>
+<H2>Data Structures</H2>
+None
+<H3>Sent</H3>
+<pre>
+"hello"
+</pre>
+
+<H3>Responses</H3>
+<pre>
+"hello"
+</pre>
+
+<H3>NOTE</H3>
+Message size limit is imposed by stack. <4k bytes should always work.
+Data is assumed to be a string.
+</body>
+</html>

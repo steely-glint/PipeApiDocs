@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tick Endpoint</title>
+</head>
+<body>
+<H1>Timestamp endpoint</H1>
+<H2>Summary</H2>
+<table>
+    <tr><td>Data Type</td><td>stream</td></tr>
+    <tr><td>Data Flow</td><td>send-only</td></tr>
+    <tr><td>Class</td> <td>TickEndpoint</td></tr>
+    <tr><td>Built in</td><td>YES</td></tr>
+    <tr><td>Purpose</td><td>timestamp service</td></tr>
+    <tr><td>supported labels</td><td>tick</td></tr>
+</table>
+<H2>Data Structures</H2>
+None.
+<H3>Sent</H3>
+none.
+
+<H3>Responses</H3>
+Local device timestamp sent every second whilst stream is open.
+Timestamp is integer milliseconds since 1970 .
+<pre>
+1234567
+</pre>
+
+
+</body>
+</html>

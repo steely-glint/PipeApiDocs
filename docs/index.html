@@ -132,8 +132,8 @@ The following services are supported in the prototype device agent:
 <em>NOTE: Licensees can selectively enable features in their binary</em>
 <table>
     <tr><th>feature</th><th>label</th><th>usage</th><th>Device dependencies</th><th>JSON?</th><th>description</th><th>example</th><th>doc</th></tr>
-<tr><td>echo</td><td>echo</td><td>ch.send("hello");</td><td>none</td><td>no</td><td>Device echos all received messages</td></tr>
-<tr><td>tick</td><td>tick</td><td></td><td>none</td><td>no</td><td>sends a timestamp every second</td></tr>
+<tr><td>echo</td><td>echo</td><td>ch.send("hello");</td><td>none</td><td>no</td><td>Device echos all received messages</td><td><a href="endpoints/echo.html">Echo</a></td></tr>
+<tr><td>tick</td><td>tick</td><td></td><td>none</td><td>no</td><td>sends a timestamp every second</td><td><a href="endpoints/tick.html">Tick</a></td></tr>
 <tr><td>cert</td><td>cert</td><td>{id: "1", action: "list"}</td><td>none</td><td>yes</td><td>CRUD for certs</td><td>claim.html</td><td><a href="endpoints/cert.html">Cert</a></td></tr>
 <tr><td>shell</td><td>shell</td><td>{command: "write",text:"ls -l"}</td><td>none</td><td>yes</td><td>runs "/bin/sh -i" on the device, sending received commands to the shell and returning stdout and stderr responses</td><td>shell.html</td></tr>
 <tr><td>test</td><td>test</td><td></td><td>none</td><td>no</td><td></td></tr>
