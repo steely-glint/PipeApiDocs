@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bug in chrome datachannels</title>
+    <script>
+
+        var configuration = {
+            "iceServers": [
+                {urls: "stun:146.148.121.175:3478"}
+            ]};
+        var srcPc = new RTCPeerConnection(configuration, null);
+        var echoPc = new RTCPeerConnection(configuration, null);
+        var count =0;
+        var bulk ="";
+        var alpha="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12345";
+        var srcChan;
+        var sentId;
+        var recId;
+
+        for (var i=0;i<100;i++){
+            bulk+=alpha;
+        }
+        function logError(error){
+            console.log(error);
+        }
+        function sendMessage(ch){
+            count++;
+            sentId.innerHTML = count;
+            var message = {count:count, pad:bulk};
+            ch.send(JSON.stringify(message));
+        }
+
+        echoPc.ondatachannel = function (evt) {
+            var echochannel = evt.channel;
+            console.log("New DC " + echochannel.label);
+            echochannel.onmessage = function(evt){
+                var req = JSON.parse(evt.data);
+                recId.innerHTML = req.count;
+                echochannel.send(evt.data);
+            }
+        };
+        srcPc.onsignalingstatechange = function (evt) {
+            console.log("Src signalling state is " + srcPc.signalingState);
+        };
+        echoPc.onsignalingstatechange = function (evt) {
+            console.log("Echo signalling state is " + echoPc.signalingState);
+        };
+        echoPc.onicecandidate = function (evt) {
+            if (evt.candidate != null) {
+                srcPc.addIceCandidate(evt.candidate);
+            }
+        };
+        srcPc.onicecandidate = function (evt) {
+            if (evt.candidate != null) {
+                echoPc.addIceCandidate(evt.candidate);
+            }
+        };
+        srcPc.onnegotiationneeded = function () {
+            var sdpConstraints = {'mandatory': {'OfferToReceiveAudio': false, 'OfferToReceiveVideo': false}}
+            srcPc.createOffer(function (desc) {
+                srcPc.setLocalDescription(desc, function () {
+                    console.log("Src Set Local description");
+                    echoPc.setRemoteDescription(desc, function () {
+                        console.log("echo set " + desc.type + " ok");
+                        if (desc.type == 'offer') {
+                            echoPc.createAnswer(function (ans) {
+                                console.log("echo create Ans ");
+                                echoPc.setLocalDescription(ans, function () {
+                                    console.log("echo Set Local description");
+                                    srcPc.setRemoteDescription(ans,function() {
+                                        console.log("src Set remote description");
+                                    }, logError);
+                                }, logError);
+                            }, logError);
+                        }
+                    }, logError);
+                }, logError);
+            }, logError, sdpConstraints);
+        };
+
+        function start(){
+            sentId = document.getElementById("sent");
+            recId = document.getElementById("received");
+            srcChan = srcPc.createDataChannel("echo", {});
+            srcChan.onopen = function(){
+                console.log("Outbound channel ");
+                sendMessage(srcChan);
+            };
+            srcChan.onmessage= function(evt){
+                sendMessage(srcChan);
+            }
+        }
+    </script>
+</head>
+<body onload="start();">
+<H1> test case for SCTP bug </H1>
+<p> Sending a 4k string over a webRTC data channel fails after 65k attempts.</p>
+<p> Test case sets up 2 PCs, creates a datachannel, then bounces a 4k string back and forth between them.</p>
+<p> After 0xFFFF bounces the next message isn't delivered. </p>
+<p> This only happens with strings that are longer than 1100 bytes - so it looks like a bug in the way SCTP messages are sequenced
+when the message sequence number wraps - and the message is made of multiple chunks.</p>
+<p> Works ok in firefox - but unfortunately takes a while to run....</p>
+Sent <div id="sent">0</div>
+Rcvd <div id="received">0</div>
+</body>
+</html>
