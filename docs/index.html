@@ -20,7 +20,7 @@ browser and an IoT device.
 <li>Low running cost</li>
 <li>Network agnostic</li>
 <li>Simple,user friendly pairing</li>
-<li>Multiple independent channels</li>
+<li>Multiple independent pipes</li>
 </ul>
 <h3>Goal</h3>
 Our goal is to
@@ -36,20 +36,24 @@ are only available to that page - not to other apps on the same device.
 <p><em>NOTE: This API is in Beta- the names and functionality may change. Specifically we expect to replace the Ipse name with Pipe before launch</em></p>
 Each service offered by the IoT device is exposed with a websocket-like interface that will be familiar to web-developers. Each service is accessed by name e.g.:
 <pre>
-        var camChannel = pipe.createDataChannel("camera", {});
+        var camPipe = duct.createDataChannel("camera", {});
 </pre>
-Once opened a channel can be used:
+Once opened a pipe can be used:
 <pre>
-        camChannel.onopen = function() {
-            camChannel.send(JSON.stringify({command: "read"}));
+        camPipe.onopen = function() {
+            camPipe.send(JSON.stringify({command: "read"}));
         };
 </pre>
-The semantics of each channel depend on it's purpose. See "Supported Services" for more details
+The exact semantics of each pipe depend on it's purpose. See "Supported Services" for more details.
+In general however each pipe looks a lot like a websocket, supporting onopen,onmessage,onclose events and a send() message. 
+Most pipes send and recieve JSON messages, but some do not.
 
 <h3>Device Agent</h3>
 The Device Agent runs on the IoT device. It consists of a multi-threaded networking process with some optional scripts to customize the services. 
 <br/>
 In our prototype devices it is run in the user's .xsession to ensure it is always present and has access to the screen. 
+Production devices (especially those using BTLE pairing or dedicated screen technologies.
+We require a Java version later than 8 - 101.
 
 <h3>Pairing</h3>
 When the device is freshly unboxed (or in the factory reset state), it has no local or remote keys. 
@@ -82,7 +86,7 @@ The following steps are needed to connect to a device:
 <ol>
 <li>Determine (or allocate) your own pipe-id:
 <pre>
-        Ipseorama.whoAmI(gotId, function(err) {
+        PipeDB.whoAmI(gotId, function(err) {
             console.log("could not create identity " + err);
         });
 </pre>
@@ -90,8 +94,8 @@ The following steps are needed to connect to a device:
 <li>Connect to the Rendevous service
 <pre>
        function gotId(id){
-            pipe = new IpseDataChannel(id);
-            pipe.getWs.onopen = function() {
+            duct = new PipeDuct(id);
+            duct.getWs.onopen = function() {
               chooseDevice();
             }
        }
@@ -100,20 +104,20 @@ The following steps are needed to connect to a device:
 <li>retreive the known device pipe-ids
 <pre>
       function chooseDevice(){
-            Ipseorama.dbListPrint(makeDc);
+            PipeDb.dbListPrint(makeDc);
       }      
 </pre>
 </li>
 <li>Select a device and connect to a service on it
 <pre>
     function makeDc(friends) {
-        pipe.setNonce("");
-        pipe.setTo(friends[friends.length -1].finger);
-        camChannel = pipe.createDataChannel("camera", {});
-        camChannel.onopen = function() {
-            camChannel.send(JSON.stringify({command: "read"}));
+        duct.setNonce("");
+        duct.setTo(friends[friends.length -1].finger);
+        camPipe = pipe.createDataChannel("camera", {});
+        camPipe.onopen = function() {
+            camPipe.send(JSON.stringify({command: "read"}));
         };
-        camChannel.onmessage = onDcMessage;
+        camPipe.onmessage = onDcMessage;
     }
 </pre>
 </li>
@@ -144,7 +148,7 @@ The following services are supported in the prototype device agent:
 <tr><td>CPU Temperature</td><td>thermal_zone[0-4]</td><td>{command: "start"}</td><td>/sys/class/thermal/thermal_zone</td><td>yes</td><td>Reads from /sys/class/thermal/thermal_zone0/temp and sends back values every 5s</td><td>tbone.html</td></tr>
 <tr><td>Open Pixel Command</td><td>opc:127.0.0.1:7890</td><td>{ command: "paint", pixels: [0x0,0xffffff]}</td><td>assumes LedScape is running on localhost</td><td>yes</td><td>Send array of pixel RGB values to LedScape neopixel driver</td><td>morse.html</td></tr>
 <tr><td>Bidirectional realtime audio</td><td>rtpmic</td><td>{type:"upgrade",time:Date.now()}</td><td>rtpmic script, softphone, mic</td><td>yes</td>
-<td>Upgrades peer connection to support realtime bi-directional audio over RTP - uses G722 codec. Script starts local 'softphone' with rtp parameters pointing at localhost</td><td>rtpmic.html</td></tr>
+<td>Upgrades peer connection to support realtime bi-directional audio over RTP - uses opus codec. Script starts local 'softphone' with rtp parameters pointing at localhost</td><td>rtpmic.html</td></tr>
 <!-- <tr><td>Realtime video</td><td>rtpcamera</td><td>ch.send("hello");</td><td>none</td><td>no</td><td></td></tr> -->
 <tr><td>Stills camera</td><td>camera</td><td>{command: "read"}</td><td>camera.sh script and mjpeg camera pipe to camera on device or local network</td><td>yes</td>
 <td>Runs local script './camera.sh' to capture mjpegs from camera and write them into the named pipe './camera' - most recent frame is base64 encoded and sent on read command</td><td>camera.html</td></tr>
@@ -154,6 +158,9 @@ The following services are supported in the prototype device agent:
 <td>Provides read/search access to stored sensor data on device.</td><solargraph.html</td></tr>
 <tr><td>Write to pipe</td><td>fakerfid</td><td>{command: "write", value:"rfid=1234"};</td><td>named pipe 'fakerfid'</td><td>yes</td><td>Writes to the file './fakerfid' whci may be a named pipe - other processes can read from that file</td><td>fakerfid.html</td></tr>
 <tr><td>Proxy for Node.js</td><td>tcp/127.0.0.1/9000</td><td></td><td>none</td><td>no</td><td>Opens a bidirectional socket to port 9000 on the device and proxies data with the channel in the browser</td><td>compass.html</td></tr>
+<tr><td>Proxy for websocket</td><td>ws://127.0.0.1:8181/websocket</td><td></td><td>none</td><td>no</td><td>Opens a bidirectional websocket proxy to a websocket local to the device. Useful for wrapping pre-existing web admin consoles</td><td>none</td></tr>
+<tr><td>Proxy for http</td><td>http://127.0.0.1:8181</td><td></td><td>get post etc</td><td>webservice running on device, bound to localhost</td><td>Opens a http 1.1 connection to a device-local webserver, serves only GET requests</td><td>none</td></tr>
+<tr><td>Remote terminal</td><td>term</td><td></td><td>none</td><td>mypty/pty</td><td>Opens a bidirectional connectio to a unix ptty which spawns a shell as the local user. Useful in combination with terminal.js - disable on prduction devices</td><td>term.html</td></tr>
 </table>
 
 <h3>Factory Reset</h3>
@@ -162,7 +169,7 @@ When restarted it will show a QRcode again.
 
 This does not remove the corresponding entries in the user's smartphone, use:
 <pre>
-            Ipseorama.dbDelPrint(tofinger, dcb);
+            PipeDb.dbDelPrint(tofinger, dcb);
 </pre>
 to do that. (see delete.html)
 
@@ -172,7 +179,7 @@ We currently require at minimum :
 <li>Linux</li>
 <li>64Mb RAM</li>
 <li>400Mhz</li>
-<li>Java 8 SE - this can be either Oracle's java or OpenJDK</li>
+<li>Java 8 SE - v 101 and higher this can be either Oracle's java or OpenJDK</li>
 <li>30Mb Flash</li>
 <li>A screen 64x64 pixel</li>
 OR
@@ -185,7 +192,8 @@ The Device agent can also be run on a Mac or Windows machine, but many of the Se
 <h3>Smartphone requirements</h3>
 We currently only support Android 5.X and higher - Chrome on Mac or Windows can also be used for testing,
 provided a good webcam is available.
-
+We have alpha support for safari on ios11 - only for one-time access - permission isn't persistant, yet.
+see ishake.html 
 </body>
 </html>
 
